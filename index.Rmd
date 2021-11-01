@@ -53,9 +53,6 @@ glimpse(guns)
 glimpse(schoolspend)
 
 joined_guns_spend <- inner_join(guns, schoolspend, by="state")
-
-#You will document the type of join that you do (left/right/inner/full), including a discussion of how many observations/rows and distinct IDs were in each original dataset, which IDs appeared in one dataset but not the other, how many observations in each dataset were dropped (if any) after doing the join, and why you chose this particular join.
-
 ```
 
 *Here, I inner joined my datasets by state. The 'schoolspend' dataset originally had 50 observations and the 'guns' dataset had 1173. With an inner join, the observations were 1150 because the 'guns' dataset included observations from Washington D.C. which is not included in the 'schoolspend' dataframe. From the 'guns' set, 23 District of Columbia rows were dropped and each unique ID represented the data for a state for that year. For the schoolspend dataset, each unique ID represents the information for a single state. I chose to do an inner join because there are columns in both datasets that I am interested in looking at. I wanted to retain the 'expendpp' from the 'schoolspend' dataframe and 'violent' from the 'guns' dataframe. Since the inner_join() function retains all the original columns and just drops the observations that don't match, I felt it would be a good fit for my purposes.*
@@ -130,25 +127,12 @@ ptratioTable %>% kable()
 #table of counts
 year94_set %>% group_by(state) %>% summarize(n())
 year94_set %>% group_by(law) %>% summarize(n())
-
-#Discuss the procedure and all (or the most interesting) findings/results in no more than two paragraphs (8 pts)
-
-#Style at least one table with gt or kable packages (4 pts)
 ```
 *Here, I set up the table of counts for each of my two categorical variables. Because each row in 'states' is unique, I did not group by two categorical variables.*
 
 #### Visualizing
 
 ```{R}
-#Create 3 effective, polished plots with ggplot (30 pts)
-
-#Each plot should have at least 2 geometry layers and at least 2 aesthetic mappings
-#Each plot should have a title and clean labeling for all mappings
-#Modify the default theme and scales at least once per plot
-#For at least one plot, add more tick marks (x, y, or both) than are given by default
-#For at least one plot, use the stat=“summary” function
-#Write a supporting paragraph (for each plot) describing what the plot depicts and any relationships/trends that are apparent (9 pts)
-
 ggplot(year94_set, aes(expendpp, violent)) + geom_point() + geom_smooth(method=lm) +  geom_point(aes(color=state), size = 3) + theme(legend.position = "none") + ggtitle("School Spending by State vs Violent Crime Rate") + xlab("Expenditure per pupil in thousands ($)") + ylab("Violent Crime Rate per 100,000") + scale_x_log10() + scale_y_log10()
 
 ```
