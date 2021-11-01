@@ -15,7 +15,7 @@ htmltools::tagList(rmarkdown::html_dependency_font_awesome())
 
 <br>
 
-- <i class="fa fa-chart-line"> </i> [Project 1: Description](https://pearlgonix.github.io/Project-1/)
+- <i class="fa fa-chart-line"> </i> [Project 1: Description](https://pearlgonix.github.io/project1/)
 
     - See my SDS 320E project here!
 
