@@ -19,73 +19,152 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 ## Data Wrangling, Exploration, Visualization
 
-### Name and EID here
+### Tran Nguyen, tnn649
 
 #### Introduction 
 
 Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
 
 ```{R}
-# read your datasets in here, e.g., with read_csv()
-
+library(tidyverse)
+library(kableExtra)
+guns <- read_csv("Guns.csv")
+schoolspend <- read_csv("Guber99.csv")
 ```
+*I have one dataset that is about school expenditure and test scores by state and another that is about guns and crime data by state including D.C. The 'schoolspend' dataset has 50 observations and 9 variables and the 'guns' dataset consists of 1173 observations and 14 variables. *
+
+*I am interested in these two data sets because I wanted to see the trend between school expenditure crime by state. To be completely honest, I am not sure what to expect but I thought it would be an interesting pair to take a look at. If I were to predict anything, I would think that there would be an inverse relationship between school spending and crime because I expect schools in states that are spending less will also show a trend in gun violence.*
 
 #### Tidying: Reshaping
 
 If your datasets are tidy already, demonstrate that you can reshape data with pivot wider/longer here (e.g., untidy and then retidy). Alternatively, it may be easier to wait until the wrangling section so you can reshape your summary statistics. Note here if you are going to do this.
 
 ```{R}
-# your tidying code (if applicable; can also wait until wrangling section)
-```
+messy <- guns %>% pivot_wider(names_from="state",values_from="population")
 
+retidied <- messy %>% pivot_longer(c("Alabama":"Wyoming"), names_to="state", values_to="population",values_drop_na=T) 
+```
+*I demonstrated my use of pivot_wider by artificially spreading out my 'law' variable with consists of either a 'yes' or 'no' for the year and state it represented and set the values to the 'violence' column. Then, I took this untidy dataset and retidied it with pivot_long to re-collapse the states back into a single column and the population values back into their own column. The resulting dataset retains the NAs from pivot_wider() so I had to include the values_drop_na=T clause to prevent them clogging up my dataset.*
     
 #### Joining/Merging
 
 ```{R}
-# your joining code
+glimpse(guns)
+glimpse(schoolspend)
 
-# your joining code
+joined_guns_spend <- inner_join(guns, schoolspend, by="state")
+
+#You will document the type of join that you do (left/right/inner/full), including a discussion of how many observations/rows and distinct IDs were in each original dataset, which IDs appeared in one dataset but not the other, how many observations in each dataset were dropped (if any) after doing the join, and why you chose this particular join.
+
 ```
 
-Discussions of joining here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+*Here, I inner joined my datasets by state. The 'schoolspend' dataset originally had 50 observations and the 'guns' dataset had 1173. With an inner join, the observations were 1150 because the 'guns' dataset included observations from Washington D.C. which is not included in the 'schoolspend' dataframe. From the 'guns' set, 23 District of Columbia rows were dropped and each unique ID represented the data for a state for that year. For the schoolspend dataset, each unique ID represents the information for a single state. I chose to do an inner join because there are columns in both datasets that I am interested in looking at. I wanted to retain the 'expendpp' from the 'schoolspend' dataframe and 'violent' from the 'guns' dataframe. Since the inner_join() function retains all the original columns and just drops the observations that don't match, I felt it would be a good fit for my purposes.*
 
 ####  Wrangling
 
 ```{R}
-# your wrangling code
-
-# your wrangling code
-
-# your wrangling code
+#Converting 'expendpp' into normal dollars 
+joined_guns_spend 
+year94_set <-joined_guns_spend %>% select(2:6, 10:11, 13:14, 16:19, 22) %>% filter(year == "1994") %>% group_by(state) %>% mutate(expendpp = expendpp * 1000) %>% mutate(state = str_replace(state, " ","_")) 
+#replacing spaces with _ because I don't like spaces in my data
 ```
+*Here, I replaced the spaces between states whose names are made up of two words just to keep everything consistent and straightforward. I converted the 'expendpp' into dollars because it is easier for me to conceptualize it that way and it also lets me compare it to other columns without having to mess with the inconsistent units and measurements. I've also decided to take a subset of the fullset because not all the years line up in both datasets so I chose a year that had overlap and I only selected the columns which I would be doing anything with. Additionally, I am more interested in seeing the differences between states rather than across time for the sake of consistency.*
 
-Your discussion of wrangling section here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+```{R}
+#How far teacher salary per state is from mean per capital income per state
+year94_set <- year94_set %>% mutate(tsalary = tsalary*1000)
+year94_set <- year94_set %>% group_by(state) %>% mutate(tsalarydist = abs(income-tsalary))
+year94_set %>% group_by(state) %>% arrange(-tsalarydist)
+```
+*In this chunk, I calculated the distance between teacher salary per state and each state's per capita income. I started by converting the salaries into dollars so it's consistent with the measure for income. It was interested to see there were a lot of east coast states that had large income disparity between the per capita income and teacher salary income and the states with generally lower per capita averages had the least pay disparity.*
 
+```{R}
+#summary stats based on whether the state have a carry law in effect (violence)
+year94_set %>% group_by(law) %>% summarize(mean(violent))
+year94_set %>% group_by(law) %>% summarize(sd(violent))
+year94_set %>% group_by(law) %>% summarize(median(violent))
+year94_set %>% group_by(law) %>% summarize(min(violent))
+year94_set %>% group_by(law) %>% summarize(max(violent))
+
+#summary stats based on whether the state have a carry law in effect (murder)
+year94_set %>% group_by(law) %>% summarize(mean(murder))
+year94_set %>% group_by(law) %>% summarize(sd(murder))
+year94_set %>% group_by(law) %>% summarize(median(murder))
+year94_set %>% group_by(law) %>% summarize(min(murder))
+year94_set %>% group_by(law) %>% summarize(max(murder))
+
+#summary stats based on whether the state have a carry law in effect (robbery)
+year94_set %>% group_by(law) %>% summarize(mean(robbery))
+year94_set %>% group_by(law) %>% summarize(sd(robbery))
+year94_set %>% group_by(law) %>% summarize(median(robbery))
+year94_set %>% group_by(law) %>% summarize(min(robbery))
+year94_set %>% group_by(law) %>% summarize(max(robbery))
+```
+*In each of these, I calculated the basic descriptives for violence, robbery, and murder based on whether a state had a carrying law in place in 1994. For violence, it seemed that there was a higher average in states that did not have a carrying law than states that do. Murders seem to have a higher average in states that don't have a carrying law versus states that do. This also seems to be the case for robberies as well. It seems that generally speaking, based on these crimes, the rate of them tend to be higher in states that did not have a carrying law.*
+
+```{R}
+#Portion of prisoners to population per state
+year94_set <- year94_set %>% mutate(populationBig = population*1000000)
+year94_set %>% group_by(state) %>% summarise(prisonerRatio = prisoners/populationBig)
+```
+*Here, I looked at the proportion of prisoners per state to the population size. I see this often as a statistic so I thought it might be helpful to compute. I was able to do this by converting the population in millions to the true size so that the comparing units are equivalent.*
+
+```{R}
+#summary stats based on whether the state have a carry law in effect (school spending)
+year94_set %>% group_by(law) %>% summarize(max(expendpp))
+
+#summary stats based on whether the state have a carry law in effect (SAT scores)
+year94_set %>% group_by(law) %>% summarize(mean(total))
+year94_set %>% group_by(law) %>% summarize(sd(total))
+year94_set %>% group_by(law) %>% summarize(median(total))
+year94_set %>% group_by(law) %>% summarize(min(total))
+year94_set %>% group_by(law) %>% summarize(max(total))
+
+#summary stats based on whether the state have a carry law in effect (ptratio)
+ptratioTable <- year94_set %>% group_by(law) %>% summarize(mean=mean(ptratio),sd=sd(ptratio), median=median(ptratio),min=min(ptratio),max=max(ptratio))
+ptratioTable %>% kable()
+```
+*In this chunk, I calculated various descriptives for school-related variables based on the state's gun law status. For expenditure, states with no carrying laws spend only slightly more than states that do. This is also reflected in average SAT scores between carrying states and non-carrying states. The ratio of teachers to students also seem to be the same. There isn't much correlation between carrying law and how well a states' schools perform or how much they spend. I have also included a kable() table but I didn't do one for each one because it makes my script lag badly.*
+
+```{R}
+#table of counts
+year94_set %>% group_by(state) %>% summarize(n())
+year94_set %>% group_by(law) %>% summarize(n())
+
+#Discuss the procedure and all (or the most interesting) findings/results in no more than two paragraphs (8 pts)
+
+#Style at least one table with gt or kable packages (4 pts)
+```
+*Here, I set up the table of counts for each of my two categorical variables. Because each row in 'states' is unique, I did not group by two categorical variables.*
 
 #### Visualizing
 
 ```{R}
-# your plot 1
-```
+#Create 3 effective, polished plots with ggplot (30 pts)
 
-Your discussion of plot 1
+#Each plot should have at least 2 geometry layers and at least 2 aesthetic mappings
+#Each plot should have a title and clean labeling for all mappings
+#Modify the default theme and scales at least once per plot
+#For at least one plot, add more tick marks (x, y, or both) than are given by default
+#For at least one plot, use the stat=“summary” function
+#Write a supporting paragraph (for each plot) describing what the plot depicts and any relationships/trends that are apparent (9 pts)
+
+ggplot(year94_set, aes(expendpp, violent)) + geom_point() + geom_smooth(method=lm) +  geom_point(aes(color=state), size = 3) + theme(legend.position = "none") + ggtitle("School Spending by State vs Violent Crime Rate") + xlab("Expenditure per pupil in thousands ($)") + ylab("Violent Crime Rate per 100,000") + scale_x_log10() + scale_y_log10()
+
+```
+*This plot represents the relationship between school expenditures and the violent crime rate per state. Based on the linear regression line, the relationship between does not appear to be strong in any direction.*
 
 ```{R}
-# your plot 2
+ggplot(year94_set, aes(x = law, y = violent, fill=law))+
+geom_bar(stat="summary", position="dodge", width = 0.4)+
+geom_errorbar(stat="summary",position="dodge", width = 0.2) + theme(axis.text.x = element_text(hjust=1),
+legend.position="none") + ggtitle("Carrying Law in Place vs Rate of Violent Crimes") + xlab("Carrying law in place?") + ylab("Average Violent Crime Rate") + scale_y_continuous(n.breaks=6)
 ```
-
-Your discussion of plot 2
+*In this plot, there is an obvious difference between the average violent crime rate and whether the state has a carrying law in place or not. The error bars in this plot do not overlap therefore indicating significant difference.*
 
 ```{R}
-# your plot 3
+ggplot(year94_set, aes(expendpp, income)) + geom_point() + geom_smooth(method=lm) +  geom_point(aes(color=state), size = 3) + theme(legend.position = "none") + ggtitle("School Spending by State vs Per Capita Income") + xlab("Expenditure per pupil in thousands ($)") + ylab("Income per capita ($)") + scale_x_log10() + scale_y_log10()
 ```
-
-Your discussion of plot 3
+*Here, it can be seen that there is a strong positive relationship between the income per capita and expenditure per student. This indicates that states that have relatively higher income per capita will also have schools that generally spend more per student.*
 
 #### Concluding Remarks
-
-If any!
-
-
-
-
